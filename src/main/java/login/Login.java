@@ -4,6 +4,8 @@
  */
 package login;
 
+
+import Connection.ConnectionFactory;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -11,6 +13,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 
 /**
  *
@@ -24,17 +28,31 @@ public class Login extends HttpServlet {
     protected void doPost(HttpServletRequest request,HttpServletResponse response)
             throws ServletException, IOException{
             
-    String usuario = request.getParameter("users");
+    String usuario = request.getParameter("username");
     String senha = request.getParameter("passw");
     
     response.setContentType("text/html");
         PrintWriter out = response.getWriter();
         
-        if("ADM".equals(usuario) && "1234".equals(senha)){
-        response.sendRedirect("test.html");
-        // out.println("<h2> Login realizado </h2>");
-        }else { 
-            out.println("<h2> Usuario ou Senha Errado </h2>");
+        try(var con = ConnectionFactory.getConnection()){
+            String sql = "SELECT * FROM users WHERE username=? AND passw=?";
+            
+             PreparedStatement stmt = con.prepareStatement(sql);
+             
+            stmt.setString(1,usuario);
+            stmt.setString(2,senha);
+            
+            ResultSet rs = stmt.executeQuery();
+            
+            if (rs.next()){
+                response.sendRedirect("pages/test.html");
+            }else{
+                out.println("<h2>Usuario ou senha invalido</h2>");
+            }
+        } catch(Exception e){
+            e.printStackTrace();
+            out.println("<h2>Erro ao Conectar ao Banco de dados</h2>");
         }
    }
-}
+}   
+    
